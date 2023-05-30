@@ -114,6 +114,7 @@ public class OracleSourceTask extends SourceTask {
     try {      
       dbConn = new OracleConnection().connect(config);
       utils = new OracleSourceConnectorUtils(dbConn, config);
+      utils.setDBContainer();
       int dbVersion = utils.getDbVersion();
       log.info("Connected to database version {}",dbVersion);
       logMinerSelectSql = utils.getLogMinerSelectSql();
@@ -122,6 +123,7 @@ public class OracleSourceTask extends SourceTask {
       if (dbVersion>=ORA_DESUPPORT_CM_VERSION){
         log.info("Db Version is {} and CONTINOUS_MINE is desupported",dbVersion);
         oraDeSupportCM=true;
+        utils.setDBContainer();
         logMinerSelectSql = utils.getLogMinerSelectSqlDeSupportCM();
       }
       logMinerStartScr=logMinerStartScr+(oraDeSupportCM ? logMinerOptionsDeSupportCM : logMinerOptions)+") \n; end;";

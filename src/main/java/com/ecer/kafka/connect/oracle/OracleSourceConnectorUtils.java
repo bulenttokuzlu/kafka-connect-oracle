@@ -99,7 +99,7 @@ public class OracleSourceConnectorUtils{
     }
 
     protected String getLogMinerSelectSqlDeSupportCM(){
-      return this.logMinerSelectSqlDeSupportCM;
+      return this.logMinerSelectSqlDeSupportCM + " SRC_CON_NAME='" + this.config.getDbName() + "' AND ";
     }
 
     protected Map<String,String> getTableColType(){
@@ -124,6 +124,14 @@ public class OracleSourceConnectorUtils{
       dbVersionRs.close();
       dbVersionPs.close();
       return dbVersion;
+    }
+    protected void setDBContainer()throws SQLException{
+        if (this.config.getMultitenant()){
+            String strDBSession = OracleConnectorSQL.DB_CDB$ROOT_CONTAINER + this.config.getDbSessionContainer();
+            PreparedStatement setDBSession = dbConn.prepareCall(strDBSession);
+            setDBSession.executeQuery();
+            setDBSession.close();
+        }
     }
 
     protected void parseTableWhiteList(){

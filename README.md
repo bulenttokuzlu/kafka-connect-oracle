@@ -186,3 +186,70 @@ In a multitenant configuration, the privileged Oracle user must be a "common use
     4. Performance Tuning
     5. Initial data load
     6. Bug fix    
+
+
+# JAVA DERLEME KOPYALA - bülent tokuzlu
+mvn clean package
+cd target
+zip kafka-connect-oracle-1.0.73.jar.zip kafka-connect-oracle-1.0.73.jar ../lib/ojdbc7.jar
+scp kafka-connect-oracle-1.0.73.jar.zip haziran@172.20.1.58:/home/haziran/kafka-connect-oracle-1.0.73.jar.zip
+
+ssh haziran@172.20.1.58
+sudo su -
+cd /home/haziran
+cp kafka-connect-oracle-1.0.73.jar.zip /usr/share/nginx/html/kafka/
+cd /usr/share/nginx/html/kafka/
+sha512sum kafka-connect-oracle-1.0.73.jar.zip
+
+# DB LOGMINER C19'DA - bülent tokuzlu
+grant CDB_DBA to c##kminer;
+
+DB server üzerinde
+sqlplus c##kminer/kminerpass
+
+
+ALTER SESSION SET container=CDB$ROOT;
+
+begin
+    DBMS_LOGMNR_D.BUILD (OPTIONS=>DBMS_LOGMNR_D.STORE_IN_REDO_LOGS);
+END;
+/
+
+Select CURRENT_SCN from v$database;
+
+SELECT  A.name
+FROM ( SELECT 'ARCH' EDOTYPE , 0 GROUP#, 'INACTIVE' STATUS, v4.THREAD#, v4.SEQUENCE# SEQUENCE#,v4.FIRST_CHANGE#, v4.FIRST_TIME, v4.NEXT_CHANGE#, v4.NEXT_TIME, NULL MEMBER, v4.NEXT_CHANGE# LAST_REDO_CHANGE#, v4.NEXT_TIME LAST_REDO_TIME, v4.NAME
+FROM v$archived_log v4
+WHERE v4.DEST_ID = 1 AND ((:vcurrscn = 0 AND 1 = 2) OR (:vcurrscn>0 AND (v4.FIRST_CHANGE#>=:vcurrscn OR ((:vcurrscn BETWEEN v4.FIRST_CHANGE# AND v4.NEXT_CHANGE#) AND(:vcurrscn != v4.NEXT_CHANGE#)))) )
+UNION ALL
+SELECT 'REDO' REDOTYPE, v1.GROUP#, v1.STATUS, v1.THREAD#, v1.SEQUENCE# SEQUENCE#, v1.FIRST_CHANGE#, v1.FIRST_TIME, v1.NEXT_CHANGE#, v1.NEXT_TIME , v22.member, decode(v4.ARCHIVED, 'YES', v1.NEXT_CHANGE#, v3.LAST_REDO_CHANGE#) LAST_REDO_CHANGE#, v3.LAST_REDO_TIME, nvl(v4.NAME, v22.member) NAME
+FROM v$log v1
+LEFT OUTER JOIN v$archived_log v4 ON v1.THREAD#= v4.THREAD# AND v1.SEQUENCE#= v4.SEQUENCE# AND v4.DEST_ID = 1 ,( SELECT v2.GROUP#, v2.MEMBER , ROW_NUMBER() OVER (PARTITION BY v2.GROUP# ORDER BY v2.GROUP#) AS rowx FROM v$logfile v2) v22, v$thread v3
+WHERE v1.GROUP#= v22.group# AND v22.rowx = v1.MEMBERS AND v1.THREAD#= v3.THREAD# AND v1.STATUS = 'CURRENT' AND ((:vcurrscn = 0 AND v1.STATUS = 'CURRENT') OR (:vcurrscn>0 AND (v1.FIRST_CHANGE#>=:vcurrscn) OR ((12665988003 BETWEEN v1.FIRST_CHANGE# AND v1.NEXT_CHANGE#) AND(:vcurrscn != v1.NEXT_CHANGE#))))) A
+
+ALTER SESSION SET container=CDB$ROOT;
+
+
+begin
+    DBMS_LOGMNR.ADD_LOGFILE('/u01/app/oracle/oradata/K8STDB/redo01.log');
+END;
+/
+
+
+ALTER SESSION SET container=CDB$ROOT;
+
+begin
+    DBMS_LOGMNR.START_LOGMNR(STARTSCN => 12669796050,OPTIONS =>  SYS.DBMS_LOGMNR.SKIP_CORRUPTION+SYS.DBMS_LOGMNR.NO_SQL_DELIMITER+SYS.DBMS_LOGMNR.NO_ROWID_IN_STMT+SYS.DBMS_LOGMNR.DICT_FROM_ONLINE_CATALOG +SYS.DBMS_LOGMNR.STRING_LITERALS_IN_STMT);
+END;
+/
+
+
+SELECT thread#, scn, start_scn, nvl(commit_scn,scn) commit_scn ,(xidusn||'.'||xidslt||'.'||xidsqn) AS xid,timestamp, operation_code, operation,status, SEG_TYPE_NAME ,info,seg_owner, table_name, username, sql_redo ,row_id, csf, TABLE_SPACE, SESSION_INFO, RS_ID, RBASQN, RBABLK, SEQUENCE#, TX_NAME, SEG_NAME, SEG_TYPE_NAME FROM  v$logmnr_contents  WHERE OPERATION_CODE in (1,2,3,5) and nvl(commit_scn,scn)>=12669796050;
+
+
+
+BEGIN
+    DBMS_LOGMNR.END_LOGMNR();
+END;
+/
+
