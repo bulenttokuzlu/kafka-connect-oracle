@@ -111,10 +111,12 @@ public class LogMinerThread implements Runnable {
             Boolean newLogFilesExists = OracleSqlUtils.getLogFilesV2(dbConn, streamOffsetScn);
             log.info("Log miner will start , startScn : {} ",streamOffsetScn);
             try {
+              log.info("Logminer start - e daha ilk sql");
               if (newLogFilesExists) {
                 logMinerStartStmt.setLong(1, streamOffsetScn);
                 logMinerStartStmt.execute();
               }
+              log.info("Logminer start SQL - ? = " + streamOffsetScn.toString() + " ---- " + logMinerSelectSql );
               logMinerSelect=dbConn.prepareCall(logMinerSelectSql);
               logMinerSelect.setFetchSize(dbFetchSize);
               logMinerSelect.setLong(1, streamOffsetScn);
@@ -150,11 +152,14 @@ public class LogMinerThread implements Runnable {
               //#log.info(operation+"-"+xid+"-"+scn);
 
               if (operation.equals(OPERATION_COMMIT)){
-                transaction = trnCollection.get(xid);            
+                //log.info("Logminer inside while loop - if (operation.equals(OPERATION_COMMIT))");
+                transaction = trnCollection.get(xid);
                 if (transaction!=null){
+                  //log.info("Logminer inside while loop - if (operation.equals(OPERATION_COMMIT)) - if (transaction!=null)");
                   //###log.info("Commit found for xid:{}",xid);
                   //transaction.setIsCompleted(true);
                   if (transaction.getContainsRollback()){
+                    //log.info("Logminer inside while loop - if (operation.equals(OPERATION_COMMIT)) - if (transaction!=null) - if (transaction.getContainsRollback())");
                     int deletedRows=0;
                     List<DMLRow> dmlRowCollOrigin = transaction.getDmlRowCollection();
                     
@@ -185,9 +190,10 @@ public class LogMinerThread implements Runnable {
                     row.setCommitScn(commitScn);
                     ix++;
                     if (ix % 10000 == 0) log.info(String.format("Fetched %s rows from db:%s ",ix,dbNameAlias)+" "+sequence+" "+oldSequence+" "+row.getScn()+" "+row.getCommitScn()+" "+row.getCommitTimestamp());
-                    //log.info(row.getScn()+"-"+row.getCommitScn()+"-"+row.getTimestamp()+"-"+"-"+row.getCommitTimestamp()+"-"+row.getXid()+"-"+row.getSegName()+"-"+row.getRowId()+"-"+row.getOperation());                    
+                    log.info(row.getScn()+"-"+row.getCommitScn()+"-"+row.getTimestamp()+"-"+"-"+row.getCommitTimestamp()+"-"+row.getXid()+"-"+row.getSegName()+"-"+row.getRowId()+"-"+row.getOperation());
                     try {
-                      sourceRecordMq.offer(createRecords(row)); 
+                      log.info("sourceRecordMq.offer(createRecords(row))");
+                      sourceRecordMq.offer(createRecords(row));
                     } catch (Exception eCreateRecord) {                      
                       log.error("Error during create record on topic {} xid :{} SQL :{}", topicName, xid,row.getSqlRedo(), eCreateRecord);
                       continue;
@@ -198,6 +204,7 @@ public class LogMinerThread implements Runnable {
               }
       
               if (operation.equals(OPERATION_ROLLBACK)){
+                //log.info("Logminer inside while loop - if (operation.equals(OPERATION_ROLLBACK))");
                 transaction = trnCollection.get(xid);
                 if (transaction!=null){
                   trnCollection.remove(xid);
@@ -205,15 +212,17 @@ public class LogMinerThread implements Runnable {
               }
 
               if (operation.equals(OPERATION_START)){
+                //log.info("Logminer inside while loop - if (operation.equals(OPERATION_START))");
                 List<DMLRow> dmlRowCollectionNew = new ArrayList<>();
                 transaction = new Transaction(xid, scn, timeStamp, dmlRowCollectionNew, false);
                 trnCollection.put(xid, transaction);
               }
 
               if ((operation.equals(OPERATION_INSERT))||(operation.equals(OPERATION_UPDATE))||(operation.equals(OPERATION_DELETE))||(operation.equals(OPERATION_DDL))){
-                
+                log.info("Logminer inside while loop - if ((operation.equals(OPERATION_INSERT))||(operation.equals(OPERATION_UPDATE))||(operation.equals(OPERATION_DELETE))||(operation.equals(OPERATION_DDL)))");
+
                 boolean contSF = logMinerData.getBoolean(CSF_FIELD);
-                String rollback=logMinerData.getString(ROLLBACK_FIELD);
+                String rollback = logMinerData.getString(ROLLBACK_FIELD);
                 Boolean trContainsRollback = rollback.equals("1") ? true : false;
                 if (skipRecord){
                   if ((scn.equals(streamOffsetCtrl))&&(commitScn.equals(streamOffsetCommitScn))&&(rowId.equals(streamOffsetRowId))&&(!contSF)){

@@ -191,13 +191,14 @@ In a multitenant configuration, the privileged Oracle user must be a "common use
 # JAVA DERLEME KOPYALA - bülent tokuzlu
 mvn clean package
 cd target
-zip kafka-connect-oracle-1.0.73.jar.zip kafka-connect-oracle-1.0.73.jar ../lib/ojdbc7.jar
+cp ../lib/ojdbc7.jar .
+zip kafka-connect-oracle-1.0.73.jar.zip kafka-connect-oracle-1.0.73.jar ojdbc7.jar
 scp kafka-connect-oracle-1.0.73.jar.zip haziran@172.20.1.58:/home/haziran/kafka-connect-oracle-1.0.73.jar.zip
 
 ssh haziran@172.20.1.58
 sudo su -
 cd /home/haziran
-cp kafka-connect-oracle-1.0.73.jar.zip /usr/share/nginx/html/kafka/
+\cp kafka-connect-oracle-1.0.73.jar.zip /usr/share/nginx/html/kafka/
 cd /usr/share/nginx/html/kafka/
 sha512sum kafka-connect-oracle-1.0.73.jar.zip
 

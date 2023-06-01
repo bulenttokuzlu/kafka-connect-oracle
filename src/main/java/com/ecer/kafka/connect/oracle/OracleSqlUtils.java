@@ -55,7 +55,8 @@ public class OracleSqlUtils {
                     i++;
                 }else {
                     option = "DBMS_LOGMNR.ADDFILE";
-                }            
+                }
+                log.info("Log Miner Add Log files SQL - " + OracleConnectorSQL.LOGMINER_ADD_LOGFILE.replace(":logfilename",logFile).replace(":option", option));
                 executeCallableStmt(conn, OracleConnectorSQL.LOGMINER_ADD_LOGFILE.replace(":logfilename",logFile).replace(":option", option));                
             }
         }

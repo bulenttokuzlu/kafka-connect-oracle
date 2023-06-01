@@ -99,7 +99,7 @@ public class OracleSourceConnectorUtils{
     }
 
     protected String getLogMinerSelectSqlDeSupportCM(){
-      return this.logMinerSelectSqlDeSupportCM + " SRC_CON_NAME='" + this.config.getDbName() + "' AND ";
+      return this.logMinerSelectSqlDeSupportCM + " AND SRC_CON_NAME=UPPER('" + this.config.getDbName() + "')";
     }
 
     protected Map<String,String> getTableColType(){
@@ -244,8 +244,10 @@ public class OracleSourceConnectorUtils{
             columnSchema = nullable ? Schema.OPTIONAL_STRING_SCHEMA : Schema.STRING_SCHEMA;            
             break;
         }
-        dataSchemaBuiler.field(columnName,columnSchema);
-        com.ecer.kafka.connect.oracle.models.Column column = new com.ecer.kafka.connect.oracle.models.Column(owner, tableName, columnName, nullable, dataType, dataLength, dataScale, pkColumn, uqColumn,columnSchema);
+        if (dataSchemaBuiler.field(columnName) == null){ // 20230601 Bülent Tokuzlu
+            dataSchemaBuiler.field(columnName,columnSchema);
+        }
+        com.ecer.kafka.connect.oracle.models.Column column = new com.ecer.kafka.connect.oracle.models.Column(owner, tableName, columnName, nullable, dataType, dataLength, dataScale, pkColumn, uqColumn, columnSchema);
         String keyTabCols = owner+DOT+tableName+DOT+columnName;
         tabColsMap.put(keyTabCols, column); 
         log.debug("tabColsMap entry added: {} = {}", keyTabCols, column.toString());

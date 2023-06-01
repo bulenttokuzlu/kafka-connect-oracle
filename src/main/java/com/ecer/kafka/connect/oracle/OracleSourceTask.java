@@ -189,13 +189,13 @@ public class OracleSourceTask extends SourceTask {
       log.info("Commit SCN : "+streamOffsetCommitScn);
       log.info(String.format("Log Miner will start at new position SCN : %s with fetch size : %s", streamOffsetScn,config.getDbFetchSize()));
       if (!oraDeSupportCM){
-      logMinerStartStmt.setLong(1, streamOffsetScn);
-      logMinerStartStmt.execute();      
-      logMinerSelect=dbConn.prepareCall(logMinerSelectSql);
-      logMinerSelect.setFetchSize(config.getDbFetchSize());
-      logMinerSelect.setLong(1, streamOffsetCommitScn);
-      logMinerData=logMinerSelect.executeQuery();
-      log.info("Logminer started successfully");
+        logMinerStartStmt.setLong(1, streamOffsetScn);
+        logMinerStartStmt.execute();
+        logMinerSelect=dbConn.prepareCall(logMinerSelectSql);
+        logMinerSelect.setFetchSize(config.getDbFetchSize());
+        logMinerSelect.setLong(1, streamOffsetCommitScn);
+        logMinerData=logMinerSelect.executeQuery();
+        log.info("Logminer started successfully");
       }else{
         //tLogMiner = new Thread(new LogMinerThread(sourceRecordMq,dbConn,streamOffsetScn, logMinerStartStmt,logMinerSelectSql,config.getDbFetchSize(),topic,dbName,utils));        
         tLogMiner = new LogMinerThread(sourceRecordMq,dbConn,streamOffsetScn, logMinerStartStmt,logMinerSelectSql,config.getDbFetchSize(),topic,dbName,utils);
@@ -265,7 +265,7 @@ public class OracleSourceTask extends SourceTask {
           Timestamp timeStamp=logMinerData.getTimestamp(TIMESTAMP_FIELD);
 
           Data row = new Data(scn, segOwner, segName, sqlRedo,timeStamp,operation);
-          topic = config.getTopic().equals("") ? (config.getDbNameAlias()+DOT+row.getSegOwner()+DOT+(operation.equals(OPERATION_DDL) ? DDL_TOPIC_POSTFIX : segName)).toUpperCase() : topic;
+          topic = config.getTopic().equals("") ? (config.getDbNameAlias()+DOT+row.getSegOwner()+DOT+(operation.equals(OPERATION_DDL) ? DDL_TOPIC_POSTFIX : segName)).toUpperCase() : config.getTopic();
           //log.info(String.format("Fetched %s rows from database %s ",ix,config.getDbNameAlias())+" "+row.getTimeStamp()+" "+row.getSegName()+" "+row.getScn()+" "+commitScn);
           if (ix % 100 == 0) log.info(String.format("Fetched %s rows from database %s ",ix,config.getDbNameAlias())+" "+row.getTimeStamp());
           dataSchemaStruct = utils.createDataSchema(segOwner, segName, sqlRedo,operation); 
