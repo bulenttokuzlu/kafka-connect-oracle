@@ -188,6 +188,45 @@ In a multitenant configuration, the privileged Oracle user must be a "common use
     6. Bug fix    
 
 
+# standalone config
+echo "
+listeners=HTTP://:8085
+bootstrap.servers=pc-kafka-cluster-kafka-bootstrap:9092
+offset.storage.file.filename=/tmp/connect.offsets
+offset.flush.interval.ms=10000
+plugin.path=/opt/kafka/plugins
+group.id=oracle-logminer-connector
+offset.storage.topic=oracle-logminer-connector-offsets
+config.storage.topic=oracle-logminer-connector-configs
+status.storage.topic=oracle-logminer-connector-status
+key.converter=org.apache.kafka.connect.storage.StringConverter
+value.converter=org.apache.kafka.connect.json.JsonConverter
+key.converter.schemas.enable=false
+value.converter.schemas.enable=true
+config.storage.replication.factor=1
+offset.storage.replication.factor=1
+status.storage.replication.factor=1
+name=oracle-logminer-connector
+connector.class=com.ecer.kafka.connect.oracle.OracleSourceConnector
+tasks.max=1
+db.name.alias=medipol
+topic=medipol
+db.name=medipol
+db.hostname=172.20.1.60
+db.port=1521
+db.user=c##kminer
+db.user.password=kminerpass
+db.fetch.size=1
+table.whitelist=PC_EDFT.DEFTER_MIGRATE
+table.blacklist=PC_EDFT.JHJHJH
+parse.dml.data=true
+reset.offset=true
+multitenant=true
+db.session.container=cdb$root
+start.scn=12619274390
+" > /home/kafka/OracleSourceConnector.properties
+./bin/connect-standalone.sh /home/kafka/OracleSourceConnector.properties
+
 # JAVA DERLEME KOPYALA - bülent tokuzlu
 mvn clean package
 cd target

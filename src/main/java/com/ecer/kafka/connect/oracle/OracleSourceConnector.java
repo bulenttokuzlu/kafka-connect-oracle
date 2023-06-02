@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.kafka.common.config.ConfigDef;
+import org.apache.kafka.common.config.Config;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.source.SourceConnector;
@@ -19,11 +20,11 @@ public class OracleSourceConnector extends SourceConnector {
     return VersionUtil.getVersion();
   }
 
+
   @Override
   public void start(Map<String, String> map) {
-    config = new OracleSourceConnectorConfig(map);    
-    
-    
+    log.info("Start called for logminer connector");
+    config = new OracleSourceConnectorConfig(map);
     String dbName = config.getDbName();    
     if (dbName.equals("")){
       throw new ConnectException("Missing Db Name property");
@@ -51,15 +52,25 @@ public class OracleSourceConnector extends SourceConnector {
   }
 
   @Override
-  public void stop() {
+  public void stop() throws ConnectException {
     //TODO: Do things that are necessary to stop your connector.    
+    log.info("Stop called for logminer connector");
     if (OracleSourceTask.getThreadConnection()!=null){
-      try {OracleSourceTask.closeDbConn();} catch (Exception e) {} 
+      try {
+        OracleSourceTask.closeDbConn();
+      } catch (Exception e) {}
     }
   }
 
   @Override
   public ConfigDef config() {
     return OracleSourceConnectorConfig.conf();
+  }
+
+  @Override
+  public Config validate(Map<String, String> map) {
+    Config conf = super.validate(map);
+    //config = new OracleSourceConnectorConfig(connectorConfigs);
+    return conf;
   }
 }

@@ -300,13 +300,14 @@ public class LogMinerThread implements Runnable {
 
   public void shutDown(){
     log.info("Logminer Thread shutdown called");
-    this.closed=true;    
+    this.closed = true;
   }
 
   private SourceRecord createRecords(DMLRow dmlRow) throws Exception{
     dataSchemaStruct = utils.createDataSchema(dmlRow.getSegOwner(), dmlRow.getSegName(), dmlRow.getSqlRedo(),dmlRow.getOperation());
     if (dmlRow.getOperation().equals(OPERATION_DDL)) dmlRow.setSegName(DDL_TOPIC_POSTFIX);
-    return new SourceRecord(sourcePartition(), sourceOffset(dmlRow.getScn(),dmlRow.getCommitScn(),dmlRow.getRowId()), dmlRow.getTopic(),  dataSchemaStruct.getDmlRowSchema(), setValueV2(dmlRow,dataSchemaStruct));
+    return new SourceRecord(sourcePartition(), sourceOffset(dmlRow.getScn(),dmlRow.getCommitScn(),dmlRow.getRowId()), dmlRow.getTopic(), null, dmlRow.getScn(), dataSchemaStruct.getDmlRowSchema(), setValueV2(dmlRow,dataSchemaStruct));
+//    return new SourceRecord(sourcePartition(), sourceOffset(dmlRow.getScn(),dmlRow.getCommitScn(),dmlRow.getRowId()), dmlRow.getTopic(),  dataSchemaStruct.getDmlRowSchema(), setValueV2(dmlRow,dataSchemaStruct));
   }
 
   private Map<String,String> sourcePartition(){

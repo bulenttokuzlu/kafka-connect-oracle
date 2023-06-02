@@ -100,7 +100,19 @@ public class OracleSourceTask extends SourceTask {
     logMinerSelect.cancel();
     dbConn.close();
   }
-
+public void stopLogminerThread(){
+  if (tLogMiner != null) {
+    tLogMiner.shutDown();
+    executor.shutdown();
+    try {
+      log.info("Waiting for logminer thread to shut down,exiting cleanly");
+      if (executor.awaitTermination(20000, TimeUnit.MILLISECONDS)) {
+      }
+    } catch (Exception e) {
+      log.error(e.getMessage());
+    }
+  }
+}
   
   @Override
   public void start(Map<String, String> map) {
@@ -205,7 +217,8 @@ public class OracleSourceTask extends SourceTask {
         Runtime.getRuntime().addShutdownHook(new Thread(){
           @Override
           public void run(){
-            tLogMiner.shutDown();
+            stopLogminerThread();
+            /*tLogMiner.shutDown();
             executor.shutdown();
             try {              
               log.info("Waiting for logminer thread to shut down,exiting cleanly");
@@ -213,7 +226,7 @@ public class OracleSourceTask extends SourceTask {
               }
             } catch (Exception e) {
               log.error(e.getMessage());
-            }
+            }*/
           }
         });
       }
@@ -290,7 +303,7 @@ public class OracleSourceTask extends SourceTask {
         records.add(sourceRecordMq.take());
         return records;
       }      
-      log.info("Logminer stoppped successfully");       
+      log.info("Logminer stopped successfully");
     } catch (SQLException e){
       log.error("SQL error during poll",e );
     }catch(JSQLParserException e){
@@ -305,9 +318,10 @@ public class OracleSourceTask extends SourceTask {
 
   @Override
   public void stop() {
-    log.info("Stop called for logminer");
+    log.info("Stop called for logminer task");
     this.closed=true;
-    try {            
+    try {
+      stopLogminerThread();
       log.info("Logminer session cancel");
       logMinerSelect.cancel();
       OracleSqlUtils.executeCallableStmt(dbConn, OracleConnectorSQL.STOP_LOGMINER_CMD);
