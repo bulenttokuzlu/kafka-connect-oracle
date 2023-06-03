@@ -225,7 +225,7 @@ multitenant=true
 db.session.container=cdb$root
 start.scn=12619274390
 " > /home/kafka/OracleSourceConnector.properties
-./bin/connect-standalone.sh /home/kafka/OracleSourceConnector.properties
+nohup ./bin/connect-standalone.sh /home/kafka/OracleSourceConnector.properties &
 
 # JAVA DERLEME KOPYALA - bülent tokuzlu
 mvn clean package
